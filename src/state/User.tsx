@@ -7,7 +7,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 const UserContext = createContext({
   user: null,
   loading: true,
-  refreshUser: async () => {},
+  refreshUser: async () => { },
 })
 
 export const useUserContext = () => useContext(UserContext)
@@ -54,7 +54,8 @@ export const UserContextProvider = ({ children }) => {
       return
     }
 
-    let json = {}
+
+    let json: any = {}
     try {
       json = await loggedResponse.json()
     } catch (err) {
