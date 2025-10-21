@@ -1,10 +1,10 @@
 import { type ClassValue, clsx } from 'clsx'
 import { NextResponse } from 'next/server'
-import { twMerge } from 'tailwind-merge'
+
 import { ZodError } from 'zod'
 
 export function cn(...inputs: ClassValue[]) {
-   return twMerge(clsx(inputs))
+  return clsx(inputs)
 }
 
 export function formatDate(input: string | number): string {
