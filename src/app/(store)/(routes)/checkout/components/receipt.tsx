@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation' // ✅ Added import
 interface ReceiptProps {
   cartItems?: any[]
   loading?: boolean
+  handleCheckout: () => void   // ✅ Added
 }
 
 export function Receipt({ cartItems = [], loading = false }: ReceiptProps) {
