@@ -85,7 +85,7 @@ export function ButtonComponent({ product }) {
    if (fetchingCart)
       return (
          <Button disabled size="sm" className="px-3 py-1">
-            <Spinner className="w-4 h-4" />
+           
          </Button>
       )
 
