@@ -8,7 +8,7 @@ export async function requestOtp(target: { phone?: string; email?: string }) {
   return res.json() // { message, requestId }
 }
 
-export async function verifyOtp(data: {  otp: string }) {
+export async function verifyOtp(data: { otp: string; phone?: string; email?: string }) {
   const res = await fetch("http://localhost:4000/auth/verify-otp", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
