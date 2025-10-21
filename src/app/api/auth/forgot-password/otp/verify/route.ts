@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       if (!user) {
         // Create user if phone not exists
         user = await prisma.user.create({
-          data: { phone: identifier, role: 'USER', passwordHash: hashedPassword },
+          data: { phone: identifier, passwordHash: hashedPassword },
         })
       } else {
         // Update password
