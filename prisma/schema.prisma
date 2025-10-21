@@ -1,0 +1,376 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model search {
+  id    Int    @id @default(autoincrement())
+  name  String @db.VarChar(255)
+  type  String @db.VarChar(50)
+  slug  String @db.VarChar(255)
+  extra Json?  @default("{}")
+}
+
+model User {
+  id                    String             @id @default(cuid())
+  email                 String?            @unique
+  phone                 String?            @unique
+  name                  String?
+  birthday              String?
+  OTP                   String?
+  emailUnsubscribeToken String?            @unique @default(cuid())
+  referralCode          String?            @unique
+  isBanned              Boolean            @default(false)
+  isEmailVerified       Boolean            @default(false)
+  isPhoneVerified       Boolean            @default(false)
+  isEmailSubscribed     Boolean            @default(false)
+  isPhoneSubscribed     Boolean            @default(false)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  passwordHash          String?
+  addresses             Address[]
+  cart                  Cart?
+  ContactMessage        ContactMessage[]
+  errors                Error[]
+  files                 File[]
+  notifications         Notification[]
+  orders                Order[]
+  payments              Payment[]
+  productReviews        ProductReview[]
+  loginHistory          UserLoginHistory[]
+  wishlist              Product[]          @relation("Wishlist")
+}
+
+model UserLoginHistory {
+  id          String    @id @default(dbgenerated("gen_random_uuid()"))
+  userId      String
+  loginMethod String
+  ipAddress   String?
+  userAgent   String?
+  status      String
+  createdAt   DateTime? @default(now()) @db.Timestamp(6)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user")
+}
+
+model Cart {
+  userId    String     @id
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id])
+  items     CartItem[]
+}
+
+model CartItem {
+  cartId    String
+  productId String
+  count     Int
+  cart      Cart    @relation(fields: [cartId], references: [userId])
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@unique([cartId, productId], name: "UniqueCartItem")
+}
+
+model Owner {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  phone     String?  @unique
+  name      String?
+  avatar    String?
+  OTP       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Author {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  phone     String?  @unique
+  name      String?
+  avatar    String?
+  OTP       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  blogs     Blog[]
+}
+
+model Brand {
+  id          String    @id @default(cuid())
+  title       String    @unique
+  description String?
+  logo        String?
+  products    Product[]
+}
+
+model Product {
+  id             String          @id @default(cuid())
+  title          String
+  description    String?
+  images         String[]
+  keywords       String[]
+  metadata       Json?
+  price          Float           @default(100)
+  discount       Float           @default(0)
+  stock          Int             @default(0)
+  isPhysical     Boolean         @default(true)
+  isAvailable    Boolean         @default(false)
+  isFeatured     Boolean         @default(false)
+  brandId        String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  cartItems      CartItem[]
+  orderItems     OrderItem[]     @relation("ProductToOrderItem")
+  brand          Brand           @relation(fields: [brandId], references: [id])
+  productReviews ProductReview[]
+  categories     Category[]      @relation("CategoryToProduct")
+  wishlists      User[]          @relation("Wishlist")
+
+  @@index([brandId])
+  @@map("Product")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  title       String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  banners     Banner[]  @relation("BannerToCategory")
+  products    Product[] @relation("CategoryToProduct")
+}
+
+model ProductReview {
+  id        String   @id @default(cuid())
+  text      String
+  rating    Int
+  productId String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([productId, userId], name: "UniqueProductProductReview")
+  @@index([userId])
+  @@index([productId])
+}
+
+model Order {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  number         Int           @unique @default(autoincrement())
+  status         String
+  total          Float?        @default(100)
+  shipping       Float?        @default(100)
+  payable        Float?        @default(100)
+  tax            Float?        @default(100)
+  discount       Float?        @default(0)
+  isPaid         Boolean?      @default(false)
+  isCompleted    Boolean?      @default(false)
+  discountCodeId String?
+  addressId      String?
+  userId         String
+  createdAt      DateTime?     @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime?     @default(now()) @updatedAt @db.Timestamp(6)
+  razorpayId     String?
+  address        Address?      @relation(fields: [addressId], references: [id])
+  discountCode   DiscountCode? @relation(fields: [discountCodeId], references: [id])
+  user           User          @relation(fields: [userId], references: [id])
+  orderItems     OrderItem[]   @relation("OrderToOrderItem")
+
+  @@map("Order")
+}
+
+model OrderItem {
+  orderId   String  @db.Uuid
+  productId String
+  count     Int
+  price     Float
+  discount  Float
+  order     Order   @relation("OrderToOrderItem", fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation("ProductToOrderItem", fields: [productId], references: [id])
+
+  @@unique([orderId, productId], name: "UniqueOrderItem")
+  @@map("OrderItem")
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  country    String   @default("IRI")
+  address    String
+  city       String
+  phone      String
+  postalCode String
+  userId     String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+  orders     Order[]
+
+  @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  content   String
+  isRead    Boolean  @default(false)
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model DiscountCode {
+  id                String   @id @default(cuid())
+  code              String   @unique
+  stock             Int      @default(1)
+  description       String?
+  percent           Int
+  maxDiscountAmount Float    @default(1)
+  startDate         DateTime
+  endDate           DateTime
+  createdAt         DateTime @default(now())
+  order             Order[]
+}
+
+model Refund {
+  id        String   @id @default(cuid())
+  amount    Float
+  reason    String
+  orderId   String   @unique @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+}
+
+model Payment {
+  id           String            @id @default(cuid())
+  number       Int               @unique @default(autoincrement())
+  status       PaymentStatusEnum
+  refId        String            @unique
+  cardPan      String?
+  cardHash     String?
+  fee          Float?
+  isSuccessful Boolean           @default(false)
+  payable      Float
+  providerId   String
+  userId       String
+  orderId      String            @db.Uuid
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  provider     PaymentProvider   @relation(fields: [providerId], references: [id])
+  user         User              @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([providerId])
+  @@index([orderId])
+}
+
+model PaymentProvider {
+  id          String    @id @default(cuid())
+  title       String    @unique
+  description String?
+  websiteUrl  String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  orders      Payment[]
+}
+
+model Error {
+  id        String   @id @default(cuid())
+  error     String
+  userId    String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model File {
+  id        String   @id @default(cuid())
+  url       String
+  userId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Blog {
+  slug        String   @id
+  title       String
+  image       String
+  description String
+  content     String?
+  categories  String[]
+  keywords    String[]
+  authorId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  hyperlink   String?
+  author      Author   @relation(fields: [authorId], references: [id])
+
+  @@index([authorId])
+}
+
+model Banner {
+  id         String     @id @default(cuid())
+  label      String
+  image      String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  link       String?
+  categories Category[] @relation("BannerToCategory")
+}
+
+model Section {
+  id              Int           @id @default(autoincrement())
+  name            String
+  type            String
+  order           Int
+  imagesPerWindow Int?
+  SectionItem     SectionItem[]
+}
+
+model SectionItem {
+  id        Int     @id @default(autoincrement())
+  sectionId Int
+  href      String
+  imageUrl  String
+  Section   Section @relation(fields: [sectionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model ContactMessage {
+  id          String   @id @default(dbgenerated("gen_random_uuid()"))
+  userId      String
+  purpose     String
+  subCategory String
+  message     String
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum OrderStatusEnum {
+  Processing
+  Shipped
+  Delivered
+  ReturnProcessing
+  ReturnCompleted
+  Cancelled
+  RefundProcessing
+  RefundCompleted
+  Denied
+  Pending
+}
+
+enum PaymentStatusEnum {
+  Processing
+  Paid
+  Failed
+  Denied
+}
