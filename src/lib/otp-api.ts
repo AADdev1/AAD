@@ -17,3 +17,6 @@ export async function verifyOtp(data: { otp: string; phone?: string; email?: str
   if (!res.ok) throw new Error("Failed to verify OTP")
   return res.json() // { message, token }
 }
+
+
+// adding comments to checck commit 
