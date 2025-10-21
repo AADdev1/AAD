@@ -1,4 +1,4 @@
-import { SignJWT, jwtVerify } from "jose"
+import { SignJWT, jwtVerify, JWTPayload } from "jose"
 
 const secretKey = process.env.JWT_SECRET_KEY || "default_dev_secret"
 if (!secretKey) {
@@ -7,7 +7,7 @@ if (!secretKey) {
 
 const secret = new TextEncoder().encode(secretKey)
 
-export async function signJWT(payload: object) {
+export async function signJWT(payload: JWTPayload) {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -15,7 +15,7 @@ export async function signJWT(payload: object) {
     .sign(secret)
 }
 
-export async function verifyJWT<T>(token: string) {
+export async function verifyJWT<T extends JWTPayload>(token: string) {
   const { payload } = await jwtVerify(token, secret)
   return payload as T
 }
