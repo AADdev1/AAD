@@ -68,6 +68,8 @@
       "swr": "^2.2.5",
       "zod": "^3.23.8"
    },
+
+   // dev deps 
    "Dependencies": {
       "@trivago/prettier-plugin-sort-imports": "^4.3.0",
       "@types/node": "^22.7.5",
