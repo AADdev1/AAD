@@ -3,7 +3,6 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { isVariableValid } from '@/lib/utils'
 import { useCartContext } from '@/state/Cart'
-
 import { Item } from './item'
 import { Receipt } from './receipt'
 import { Skeleton } from './skeleton'
