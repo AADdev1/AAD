@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyOtp } from '@/lib/otp-api'
 import { signJWT } from '@/lib/jwt'
 import prisma from '@/lib/prisma'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 
 export async function POST(req: NextRequest) {
   try {

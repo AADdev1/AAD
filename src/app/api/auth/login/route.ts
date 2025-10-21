@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import { signJWT } from '@/lib/jwt' // your JWT helper
 
 export async function POST(req: NextRequest) {
