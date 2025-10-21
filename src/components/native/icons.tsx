@@ -1,7 +1,8 @@
 export const Spinner = () => (
    <svg
       aria-hidden="true"
-      className={`m-auto h-5 animate-spin fill-neutral-900 text-neutral-200 dark:text-neutral-600 ${className}`}
+      className={`m-auto h-5 animate-spin fill-neutral-900 text-neutral-200 dark:text-neutral-600 ${className}`} 
+      // added class name
       viewBox="0 0 100 101"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
