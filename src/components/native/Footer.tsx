@@ -20,10 +20,7 @@ const data = [
    {
       label: 'RESOURCES',
       links: [
-         {
-            label: 'Blog',
-            url: '/blog',
-         },
+      
          {
             label: 'About Us',
             url: '/aboutus',
@@ -110,15 +107,7 @@ function Socials() {
             <TwitterIcon className="h-4" />
             <span className="sr-only">Twitter page</span>
          </a>
-         <a
-            href="https://github.com/sesto-dev"
-            target="_blank"
-            rel="noreferrer"
-         >
-            <GithubIcon className="h-4" />
-            <span className="sr-only">GitHub account</span>
-         </a>
-         
+
       </div>
    )
 }

@@ -6,7 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { docsConfig } from '@/config/docs'
 import Config from '@/config/site'
 import { cn } from '@/lib/utils'
-import { ViewIcon } from 'lucide-react'
+import { Menu  } from 'lucide-react'
 import Link, { LinkProps } from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -21,7 +21,7 @@ export function MobileNav() {
                variant="ghost"
                className="mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
             >
-               <ViewIcon className="h-5" />
+               <Menu className="h-5" />
                <span className="sr-only">Toggle Menu</span>
             </Button>
          </SheetTrigger>
@@ -48,20 +48,7 @@ export function MobileNav() {
                </div>
             </MobileLink>
             <ScrollArea className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
-               <div className="flex flex-col space-y-3">
-                  {docsConfig.mainNav?.map(
-                     (item) =>
-                        item.href && (
-                           <MobileLink
-                              key={item.href}
-                              href={item.href}
-                              onOpenChange={setOpen}
-                           >
-                              {item.title}
-                           </MobileLink>
-                        )
-                  )}
-               </div>
+               
                <div className="flex flex-col space-y-2">
                   {docsConfig.sidebarNav.map((item, index) => (
                      <div key={index} className="flex flex-col space-y-3 pt-6">
