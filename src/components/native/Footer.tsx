@@ -1,6 +1,6 @@
 import { Separator } from '@/components/native/separator'
 import config from '@/config/site'
-import { GithubIcon, InstagramIcon, TwitterIcon } from 'lucide-react'
+import { FacebookIcon, InstagramIcon, TwitterIcon } from 'lucide-react'
 import Link from 'next/link'
 
 const data = [
@@ -92,7 +92,7 @@ function Socials() {
    return (
       <div className="mb-6 flex justify-center space-x-6 text-muted-foreground">
          <a
-            href="https://instagram.com/sesto_dev"
+            href="https://www.instagram.com/all.about.diecast/"
             target="_blank"
             rel="noreferrer"
          >
@@ -100,11 +100,19 @@ function Socials() {
             <span className="sr-only">Instagram page</span>
          </a>
          <a
-            href="https://twitter.com/sesto_dev"
+            href="https://x.com/AllAboutDiecast"
             target="_blank"
             rel="noreferrer"
          >
             <TwitterIcon className="h-4" />
+            <span className="sr-only">Twitter page</span>
+         </a>
+                  <a
+            href="https://www.facebook.com/share/1BaHNtUTHZ/"
+            target="_blank"
+            rel="noreferrer"
+         >
+            <FacebookIcon className="h-4" />
             <span className="sr-only">Twitter page</span>
          </a>
 
