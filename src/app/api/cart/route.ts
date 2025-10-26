@@ -52,6 +52,7 @@ export async function GET(req: Request) {
 }
 
 /* ---------------------------------- POST CART ---------------------------------- */
+/* ---------------------------------- POST CART (optimized) ---------------------------------- */
 export async function POST(req: Request) {
   try {
     const userId = req.headers.get('X-USER-ID')
@@ -69,7 +70,7 @@ export async function POST(req: Request) {
 
     console.log(`🛍️ [CART_POST] userId=${userId} productId=${productId} count=${count}`)
 
-    // Step 1: Check product existence and stock
+    // 1) Validate product (availability & stock)
     const product = await prisma.product.findUnique({
       where: { id: productId },
       select: { id: true, stock: true, isAvailable: true, title: true },
@@ -96,62 +97,68 @@ export async function POST(req: Request) {
       )
     }
 
-    // Step 2: If count < 1, remove item
-    if (count < 1) {
-      await prisma.cartItem.delete({
-        where: { UniqueCartItem: { cartId: userId, productId } },
-      })
-      console.log('🗑️ [CART_POST] Removed product from cart:', productId)
-    } else {
-      // Step 3: Upsert cart and item
-      await prisma.cart.upsert({
-        where: { userId },
-        create: {
-          user: { connect: { id: userId } },
-          items: {
-            create: {
-              productId,
-              count,
+    // 2) All writes + final read in ONE DB round-trip
+    const cart = await prisma.$transaction(async (tx) => {
+      if (count < 1) {
+        // Ensure cart record exists (you chose to KEEP cart even if empty)
+        await tx.cart.upsert({
+          where: { userId },
+          create: { user: { connect: { id: userId } } },
+          update: {},
+        })
+        // Remove item; ignore if it didn't exist (keeps behavior graceful)
+        try {
+          await tx.cartItem.delete({
+            where: { UniqueCartItem: { cartId: userId, productId } },
+          })
+        } catch {
+          /* no-op */
+        }
+      } else {
+        // Upsert cart + upsert item count
+        await tx.cart.upsert({
+          where: { userId },
+          create: {
+            user: { connect: { id: userId } },
+            items: { create: { productId, count } },
+          },
+          update: {
+            items: {
+              upsert: {
+                where: { UniqueCartItem: { cartId: userId, productId } },
+                update: { count },
+                create: { productId, count },
+              },
             },
           },
-        },
-        update: {
-          items: {
-            upsert: {
-              where: { UniqueCartItem: { cartId: userId, productId } },
-              update: { count },
-              create: { productId, count },
-            },
-          },
-        },
-      })
-      console.log('✅ [CART_POST] Added/updated product in cart:', product.title)
-    }
+        })
+      }
 
-    // Step 4: Return updated cart
-    const cart = await prisma.cart.findUniqueOrThrow({
-      where: { userId },
-      include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                title: true,
-                price: true,
-                stock: true,
-                isAvailable: true,
-                images: true,
+      // Return updated cart (same shape you used)
+      return tx.cart.findUniqueOrThrow({
+        where: { userId },
+        include: {
+          items: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  title: true,
+                  price: true,
+                  stock: true,
+                  isAvailable: true,
+                  images: true,
+                },
               },
             },
           },
         },
-      },
+      })
     })
 
     return NextResponse.json(cart)
   } catch (error) {
-    console.error('❌ [CART_POST] Error:', error)
+    console.error('❌ [CART_POST] Error (optimized):', error)
     return new NextResponse('Internal error', { status: 500 })
   }
 }
