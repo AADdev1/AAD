@@ -19,7 +19,7 @@ import {
    MapPinIcon,
    UserIcon,
 } from 'lucide-react'
-import { ShoppingBasketIcon } from 'lucide-react'
+import { ShoppingCartIcon } from 'lucide-react'
 import Link from 'next/link'
 
 export function UserNav() {
@@ -71,7 +71,7 @@ export function UserNav() {
                <DropdownMenuSeparator />
                <Link href="/cart">
                   <DropdownMenuItem className="flex gap-2">
-                     <ShoppingBasketIcon className="h-4" /> Cart
+                     <ShoppingCartIcon className="h-4" /> Cart
                   </DropdownMenuItem>
                </Link>
                <Link href="/wishlist">

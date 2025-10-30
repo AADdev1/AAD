@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { useAuthenticated } from '@/hooks/useAuthentication'
 import { getCountInCart, getLocalCart } from '@/lib/cart'
 import { CartContextProvider, useCartContext } from '@/state/Cart'
-import { MinusIcon, PlusIcon, ShoppingBasketIcon, X } from 'lucide-react'
+import { MinusIcon, PlusIcon, ShoppingCartIcon, X } from 'lucide-react'
 import { useState } from 'react'
 
 export default function CartButton({ product }) {
@@ -161,7 +161,7 @@ export function ButtonComponent({ product }) {
    if (count === 0) {
       return (
          <Button className="flex gap-2" onClick={onAddToCart}>
-            <ShoppingBasketIcon className="h-4" /> Add to Cart
+            <ShoppingCartIcon className="h-4" /> Add to Cart
          </Button>
       )
    }

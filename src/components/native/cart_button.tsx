@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { useAuthenticated } from '@/hooks/useAuthentication'
 import { getCountInCart, getLocalCart } from '@/lib/cart'
 import { CartContextProvider, useCartContext } from '@/state/Cart'
-import { MinusIcon, PlusIcon, ShoppingBasketIcon, X } from 'lucide-react'
+import { MinusIcon, PlusIcon, ShoppingCartIcon, X } from 'lucide-react'
 import { useState } from 'react'
 
 export default function CartButton({ product }) {
@@ -95,7 +95,7 @@ export function ButtonComponent({ product }) {
             className="flex items-center gap-1 text-sm px-3 py-1"
             onClick={onAddToCart}
          >
-            <ShoppingBasketIcon className="w-4 h-4" /> Add
+            <ShoppingCartIcon className="w-4 h-4" /> Add
          </Button>
       )
 
