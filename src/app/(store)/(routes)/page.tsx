@@ -4,6 +4,7 @@ import {
    BlogPostSkeletonGrid,
 } from '@/components/native/BlogCard'
 import Carousel from '@/components/native/Carousel'
+import MobileCarousel from '@/components/native/MobileCarousel'
 import { ProductGrid, ProductSkeletonGrid } from '@/components/native/Product'
 import { Heading } from '@/components/native/heading'
 import { Separator } from '@/components/native/separator'
@@ -23,11 +24,21 @@ export default async function Index() {
       take: 3,
    })
 
-   const banners = await prisma.banner.findMany()
+const banners = await prisma.banner.findMany({
+  select: {
+    image: true,
+    mobileImage: true,
+  },
+})
 
    return (
       <div className="flex flex-col border-neutral-200 dark:border-neutral-700">
-         <Carousel images={banners.map((obj) => obj.image)} />
+         <div className="hidden md:block">
+            <Carousel images={banners.map((obj) => obj.image)} />
+         </div>
+         <div className="block md:hidden">
+            <MobileCarousel images={banners.map((obj) => obj.mobileImage || obj.image)} />
+         </div>
          <Separator className="my-8" />
          <Heading
             title="Products"

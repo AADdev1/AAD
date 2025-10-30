@@ -319,13 +319,14 @@ model Blog {
 }
 
 model Banner {
-  id         String     @id @default(cuid())
-  label      String
-  image      String
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  link       String?
-  categories Category[] @relation("BannerToCategory")
+  id          String     @id @default(cuid())
+  label       String
+  image       String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  link        String?
+  mobileImage String?
+  categories  Category[] @relation("BannerToCategory")
 }
 
 model Section {
