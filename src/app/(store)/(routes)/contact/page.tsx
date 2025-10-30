@@ -76,9 +76,8 @@ export default function ContactUsPage() {
           <h2 className="text-xl font-semibold mb-2">Contact Information</h2>
           <ul className="space-y-1 text-sm text-muted-foreground">
             <li>📧 Email: <a href="mailto:allaboutdiecastcare@gmail.com" className="text-blue-600">allaboutdiecastcare@gmail.com</a></li>
-            <li>📞 Call: +91 98765 43210</li>
+            <li>📞 Call: +91 82332 08359</li>
             <li>💬 WhatsApp: <a href="https://wa.me/918233208359" className="text-green-600">Chat with us</a></li>
-            <li>🏢 Address: Gala No. 7, Mumbai, Maharashtra, India</li>
             <li>🕒 Working Hours: Mon–Sat, 10 AM – 7 PM</li>
           </ul>
         </div>

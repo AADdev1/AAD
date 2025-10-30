@@ -24,12 +24,12 @@ export default async function Index() {
       take: 3,
    })
 
-const banners = await prisma.banner.findMany({
-  select: {
-    image: true,
-    mobileImage: true,
-  },
-})
+   const banners = await prisma.banner.findMany({
+      select: {
+         image: true,
+         mobileImage: true,
+      },
+   })
 
    return (
       <div className="flex flex-col border-neutral-200 dark:border-neutral-700">
@@ -39,7 +39,8 @@ const banners = await prisma.banner.findMany({
          <div className="block md:hidden">
             <MobileCarousel images={banners.map((obj) => obj.mobileImage || obj.image)} />
          </div>
-         <Separator className="my-8" />
+         <Separator className="mt-5 mb-2" />
+
          <Heading
             title="Products"
             description="Below is a list of products we have available for you."

@@ -30,15 +30,15 @@ export default function Carousel({ images }: { images: string[] }) {
 
 
    // 🔁 reinitialize when images change or load completes
-useEffect(() => {
-  if (!emblaApi) return
+   useEffect(() => {
+      if (!emblaApi) return
 
-  const timer = setTimeout(() => emblaApi.reInit(), 500)
+      const timer = setTimeout(() => emblaApi.reInit(), 500)
 
-  return () => {
-    clearTimeout(timer)
-  }
-}, [emblaApi, images])
+      return () => {
+         clearTimeout(timer)
+      }
+   }, [emblaApi, images])
 
 
    return (
@@ -46,8 +46,10 @@ useEffect(() => {
          <div className="overflow-hidden rounded-lg" ref={emblaRef}>
             <div className="flex">
                {images.map((src, i) => (
-                  <div className="relative h-96 flex-[0_0_100%]" key={i}>
-                     <Image
+                  <div
+                     className="relative flex-[0_0_100%] h-96 md:h-96 sm:h-72 xs:h-64"
+                     key={i}
+                  >                     <Image
                         src={src}
                         alt={`banner-${i}`}
                         fill
