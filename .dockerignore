@@ -1,35 +1,36 @@
 # Stage 1: Build the application
-FROM oven/bun:1.1.24-alpine AS builder
+FROM node:18-alpine AS builder
 
+# Set working directory
 WORKDIR /app
 
 # Copy dependency files
-COPY package.json bun.lockb ./
+COPY package*.json ./
 
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN npm ci --only=production
 
-# Copy all code
+# Copy the rest of the application code
 COPY . .
 
 # Generate Prisma client
-RUN bun prisma generate
+RUN npx prisma generate
 
-# Build the Next.js app
-RUN bun run build
+# Build the Next.js application
+RUN npm run build
 
 # Stage 2: Run the application
-FROM oven/bun:1.1.24-alpine AS runner
+FROM node:18-alpine AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copy only what's needed
-COPY package.json bun.lockb ./
-RUN bun install --frozen-lockfile --production
+# Copy only required files for runtime
+COPY package*.json ./
+RUN npm ci --only=production
 
-# Copy build artifacts from builder
+# Copy built app from builder
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
@@ -37,5 +38,9 @@ COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 3000
 
-# Start the production app
-CMD ["bun", "run", "start"]
+# Optional health check (Render auto restarts if app crashes)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:3000/ || exit 1
+
+# Start Next.js app
+CMD ["npm", "run", "start"]
