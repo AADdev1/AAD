@@ -1,7 +1,41 @@
-node_modules
-.next
-prisma
-Dockerfile
-.dockerignore
-.git
-.env
+# Stage 1: Build the application
+FROM oven/bun:1.1.24-alpine AS builder
+
+WORKDIR /app
+
+# Copy dependency files
+COPY package.json bun.lockb ./
+
+# Install dependencies
+RUN bun install --frozen-lockfile
+
+# Copy all code
+COPY . .
+
+# Generate Prisma client
+RUN bun prisma generate
+
+# Build the Next.js app
+RUN bun run build
+
+# Stage 2: Run the application
+FROM oven/bun:1.1.24-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copy only what's needed
+COPY package.json bun.lockb ./
+RUN bun install --frozen-lockfile --production
+
+# Copy build artifacts from builder
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules ./node_modules
+
+EXPOSE 3000
+
+# Start the production app
+CMD ["bun", "run", "start"]
