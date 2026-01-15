@@ -10,6 +10,7 @@ import {
    navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu'
 import config from '@/config/site'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { forwardRef } from 'react'
@@ -26,11 +27,20 @@ const components: { title: string; href: string; description: string }[] = [
 export function MainNav() {
    return (
       <div className="hidden md:flex gap-4">
-         <Link href="/" className="flex items-center">
-            <span className="hidden font-medium sm:inline-block">
-               {config.name}
-            </span>
-         </Link>
+       <Link href="/" className="flex items-center gap-2">
+  <Image
+    src="/Logo_dark.png"
+    alt="Logo"
+    width={585}
+    height={256}
+    className="h-8 w-auto"
+    priority
+  />
+  <span className="hidden font-medium sm:inline-block">
+    {config.name}
+  </span>
+</Link>
+
          <NavMenu />
       </div>
    )
