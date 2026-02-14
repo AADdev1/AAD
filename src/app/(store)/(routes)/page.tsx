@@ -26,8 +26,8 @@ export default async function Index() {
 
    const banners = await prisma.banner.findMany({
       select: {
-         image: true
-          //mobileImage?: string
+         image: true,
+         mobileImage: true, // ✅ correct
       },
    })
 
@@ -37,20 +37,26 @@ export default async function Index() {
             <Carousel images={banners.map((obj) => obj.image)} />
          </div>
          <div className="block md:hidden">
-            <MobileCarousel images={banners.map((obj) => obj.mobileImage || obj.image)} />
+            <MobileCarousel
+               images={banners.map((obj) => obj.mobileImage || obj.image)}
+            />
          </div>
+
          <Separator className="mt-5 mb-2" />
 
          <Heading
             title="Products"
             description="Below is a list of products we have available for you."
          />
+
          {isVariableValid(products) ? (
             <ProductGrid products={products} />
          ) : (
             <ProductSkeletonGrid />
          )}
+
          <Separator className="my-8" />
+
          {isVariableValid(blogs) ? (
             <BlogPostGrid blogs={blogs} />
          ) : (

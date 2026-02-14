@@ -42,14 +42,14 @@ export async function POST(req: NextRequest) {
         identifier: phone,
         identifier_type: "phone",
         otp,
-        otpCreatedOn: new Date(),
+        otp_created_on   : new Date(),
       },
       update: {
         otp,
-        otpCreatedOn: new Date(),
-        tempToken: null,
-        tempTokenCreatedOn: null,
-        isSignedUp: false,
+        otp_created_on   : new Date(),
+        temp_token: null,
+        temp_token_created_on: null,
+        is_signed_up: false,
       },
     })
 

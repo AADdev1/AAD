@@ -22,7 +22,8 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    if (!record || record.isSignedUp) {
+    // ✅ FIXED
+    if (!record || record.is_signed_up) {
       return NextResponse.json(
         { error: "Invalid or expired OTP" },
         { status: 400 }
@@ -36,7 +37,8 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (isExpired(record.otpCreatedOn, 5)) {
+    // ✅ FIXED
+    if (isExpired(record.otp_created_on, 5)) {
       return NextResponse.json(
         { error: "OTP expired" },
         { status: 400 }
@@ -49,8 +51,8 @@ export async function POST(req: NextRequest) {
     await prisma.tempVerification.update({
       where: { id: record.id },
       data: {
-        tempToken: hashedToken,
-        tempTokenCreatedOn: new Date(),
+        temp_token: hashedToken, // ✅ FIXED
+        temp_token_created_on: new Date(), // ✅ FIXED
         otp: "USED",
       },
     })

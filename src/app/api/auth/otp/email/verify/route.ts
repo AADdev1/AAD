@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    if (!record || record.isSignedUp) {
+    if (!record || record.is_signed_up) {
       return NextResponse.json(
         { error: "Invalid or expired OTP" },
         { status: 400 }
