@@ -26,8 +26,8 @@ export default async function Index() {
 
    const banners = await prisma.banner.findMany({
       select: {
-         image: true,
-         mobileImage: true,
+         image: true
+         
       },
    })
 

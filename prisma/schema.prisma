@@ -45,6 +45,25 @@ model User {
   wishlist              Product[]          @relation("Wishlist")
 }
 
+model TempVerification {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  identifier            String
+  identifier_type       String
+  otp                   String
+  otp_created_on        DateTime  @db.Timestamptz(6)
+  temp_token            String?
+  temp_token_created_on DateTime? @db.Timestamptz(6)
+  is_signed_up          Boolean   @default(false)
+  created_at            DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime  @default(now()) @db.Timestamptz(6)
+  resend_count       Int       @default(0)
+  last_otp_sent_at   DateTime? @db.Timestamptz(6)
+  cooldown_until     DateTime? @db.Timestamptz(6)
+  @@unique([identifier, identifier_type])
+  @@index([otp_created_on, temp_token_created_on], map: "idx_temp_verification_expiry")
+  @@map("temp_verification")
+}
+
 model UserLoginHistory {
   id          String    @id @default(dbgenerated("gen_random_uuid()"))
   userId      String

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requestOtp } from '@/lib/otp-api'
+import prisma from '@/lib/prisma'
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,20 +12,45 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    let response
-    if (/^\d{10}$/.test(identifier)) {
-      // It's a phone number
-      response = await requestOtp({ phone: identifier })
-    } else {
-      // Assume it's an email
-      response = await requestOtp({ email: identifier })
+    const isPhone = /^\d{10}$/.test(identifier)
+
+    // 🔍 Find user by identifier
+    const user = isPhone
+      ? await prisma.user.findUnique({ where: { phone: identifier } })
+      : await prisma.user.findUnique({ where: { email: identifier } })
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Account not found with this identifier' },
+        { status: 404 }
+      )
     }
 
+    // 🔐 Check verification status
+    if (isPhone && !user.isPhoneVerified) {
+      return NextResponse.json(
+        { error: 'Phone number is not verified for password recovery' },
+        { status: 403 }
+      )
+    }
+
+    if (!isPhone && !user.isEmailVerified) {
+      return NextResponse.json(
+        { error: 'Email is not verified for password recovery' },
+        { status: 403 }
+      )
+    }
+
+    // ✅ Phase-1 success: OTP CAN be sent (but not yet)
     return NextResponse.json({
-      message: response.message || 'OTP sent successfully',
+      message: 'Identifier verified. OTP can be sent.',
+      nextStep: 'SEND_OTP',
     })
   } catch (error: any) {
-    console.error('SEND OTP ERROR:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('FORGOT PASSWORD PRECHECK ERROR:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
 }

@@ -15,58 +15,47 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    let otpResponse
-    if (/^\d{10}$/.test(identifier)) {
-      // Phone number
-      otpResponse = await verifyOtp({ otp, phone: identifier })
-    } else {
-      // Email
-      otpResponse = await verifyOtp({ otp, email: identifier })
-    }
+    // 🔍 Determine identifier type
+    const isPhone = /^\d{10}$/.test(identifier)
+
+    // 🔐 Verify OTP
+    const otpResponse = isPhone
+      ? await verifyOtp({ otp, phone: identifier })
+      : await verifyOtp({ otp, email: identifier })
 
     if (!otpResponse.token) {
       return NextResponse.json({ error: 'Invalid OTP' }, { status: 400 })
     }
 
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 12)
+    // 🔎 Find existing user ONLY (no creation allowed)
+    const user = isPhone
+      ? await prisma.user.findUnique({ where: { phone: identifier } })
+      : await prisma.user.findUnique({ where: { email: identifier } })
 
-    // Update user password in Prisma
-    let user
-    if (/^\d{10}$/.test(identifier)) {
-      user = await prisma.user.findUnique({ where: { phone: identifier } })
-      if (!user) {
-        // Create user if phone not exists
-        user = await prisma.user.create({
-          data: { phone: identifier, passwordHash: hashedPassword },
-        })
-      } else {
-        // Update password
-        user = await prisma.user.update({
-          where: { phone: identifier },
-          data: { passwordHash: hashedPassword },
-        })
-      }
-    } else {
-      user = await prisma.user.findUnique({ where: { email: identifier } })
-      if (!user) {
-        return NextResponse.json(
-          { error: 'User not found with this email' },
-          { status: 404 }
-        )
-      } else {
-        user = await prisma.user.update({
-          where: { email: identifier },
-          data: { passwordHash: hashedPassword },
-        })
-      }
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Account not found for this identifier' },
+        { status: 404 }
+      )
     }
 
-    // Sign JWT
-    const token = await signJWT({ sub: user.id })
+    // 🔒 Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 12)
 
-    // Set cookies
-    const res = NextResponse.json({ message: 'Password updated successfully', user })
+    // 🔄 Update password
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: hashedPassword },
+    })
+
+    // 🔑 Issue JWT (auto-login after reset)
+    const token = await signJWT({ sub: updatedUser.id })
+
+    const res = NextResponse.json({
+      message: 'Password updated successfully',
+      user: updatedUser,
+    })
+
     res.cookies.set('token', token, { httpOnly: true, path: '/' })
     res.cookies.set('logged-in', 'true', { path: '/' })
 

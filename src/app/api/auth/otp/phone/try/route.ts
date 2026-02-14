@@ -4,38 +4,61 @@ import { requestOtp } from "@/lib/otp-api"
 
 export async function POST(req: NextRequest) {
   try {
-    const { phone, email } = await req.json()
+    const { phone } = await req.json()
 
     if (!phone) {
-      return NextResponse.json({ error: "Phone is required" }, { status: 400 })
-    }
-
-    // ✅ Check if user already exists by phone or email (optional)
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { phone: phone },
-          ...(email ? [{ email: email }] : []),
-        ],
-      },
-    })
-
-    if (existingUser) {
       return NextResponse.json(
-        { error: "Phone or email already registered" },
+        { error: "Phone number is required" },
         { status: 400 }
       )
     }
 
-    // ✅ Continue to request OTP
-    const response = await requestOtp({ phone })
-
-    return NextResponse.json({
-      message: response.message,
-      requestId: response.requestId,
+    // ❌ Block if phone already registered
+    const existingUser = await prisma.user.findUnique({
+      where: { phone },
+      select: { id: true },
     })
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "Phone number already registered" },
+        { status: 400 }
+      )
+    }
+
+    // 🔐 Generate OTP
+    const otpResponse = await requestOtp({ phone })
+    const otp = otpResponse.otp
+
+    // 🔁 UPSERT temp_verification
+    await prisma.tempVerification.upsert({
+      where: {
+        identifier_identifier_type: {
+          identifier: phone,
+          identifier_type: "phone",
+        },
+      },
+      create: {
+        identifier: phone,
+        identifier_type: "phone",
+        otp,
+        otpCreatedOn: new Date(),
+      },
+      update: {
+        otp,
+        otpCreatedOn: new Date(),
+        tempToken: null,
+        tempTokenCreatedOn: null,
+        isSignedUp: false,
+      },
+    })
+
+    return NextResponse.json({ message: "OTP sent to phone" })
   } catch (error: any) {
-    console.error("PHONE TRY ERROR:", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error("PHONE TRY OTP ERROR:", error)
+    return NextResponse.json(
+      { error: "Failed to send OTP" },
+      { status: 500 }
+    )
   }
 }

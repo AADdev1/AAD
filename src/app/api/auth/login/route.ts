@@ -1,61 +1,75 @@
-import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
-import bcrypt from 'bcryptjs'
-import { signJWT } from '@/lib/jwt' // your JWT helper
+import { NextRequest, NextResponse } from "next/server"
+import prisma from "@/lib/prisma"
+import bcrypt from "bcryptjs"
+import { signJWT } from "@/lib/jwt"
+
+
 
 export async function POST(req: NextRequest) {
   try {
+    
     const { identifier, password } = await req.json()
 
+console.log("LOGIN IDENTIFIER:", identifier)
+
+
     if (!identifier || !password) {
-      return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
+      return NextResponse.json(
+        { error: "Identifier and password required" },
+        { status: 400 }
+      )
     }
 
-    // Find user by email or phone
+
+    
     const user = await prisma.user.findFirst({
       where: {
         OR: [
           { email: identifier },
-          { phone: identifier }
-        ]
-      }
-    })
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    // Verify password
-    const isPasswordValid = user.passwordHash
-      ? await bcrypt.compare(password, user.passwordHash)
-      : false
-
-    // Log the login attempt
-    await prisma.userLoginHistory.create({
-      data: {
-        userId: user.id,
-        loginMethod: user.email === identifier ? 'email-password' : 'phone-password',
-        ipAddress: req.ip || 'unknown',
-        userAgent: req.headers.get('user-agent') || 'unknown',
-        status: isPasswordValid ? 'success' : 'failed',
+          { phone: identifier },
+        ],
       },
     })
 
-    if (!isPasswordValid) {
-      return NextResponse.json({ error: 'Invalid password' }, { status: 401 })
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 400 }
+      )
     }
 
-    // Sign JWT
-    const token = await signJWT({ sub: user.id })
+    if (!user.passwordHash) {
+      return NextResponse.json(
+        { error: "Invalid login" },
+        { status: 400 }
+      )
+    }
 
-    // Set cookies like OTP flow
-    const res = NextResponse.json({ message: 'Login successful', user })
-    res.cookies.set('token', token, { httpOnly: true, path: '/' })
-    res.cookies.set('logged-in', 'true', { path: '/' })
+    const valid = await bcrypt.compare(password, user.passwordHash)
+
+    if (!valid) {
+      return NextResponse.json(
+        { error: "Invalid password" },
+        { status: 400 }
+      )
+    }
+
+    const token = await signJWT({ sub: user.id })
+    const res = NextResponse.json({ message: "Login successful" })
+
+    res.cookies.set("token", token, {
+      httpOnly: true,
+      path: "/",
+    })
+
+    res.cookies.set("logged-in", "true", { path: "/" })
 
     return res
-  } catch (error: any) {
-    console.error('PASSWORD LOGIN ERROR:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch (error) {
+    console.error("LOGIN ERROR:", error)
+    return NextResponse.json(
+      { error: "Login failed" },
+      { status: 500 }
+    )
   }
 }

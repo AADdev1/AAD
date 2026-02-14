@@ -11,332 +11,300 @@ import { isEmailValid, isIndianPhoneNumberValid } from '@/lib/utils'
 export function UserAuthForm() {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login')
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [emailTempToken, setEmailTempToken] = useState('')
+  const [phoneTempToken, setPhoneTempToken] = useState('')
 
-  // Login state
+  /* ---------- LOGIN ---------- */
   const [loginIdentifier, setLoginIdentifier] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
 
-  // Sign-up state
+  /* ---------- SIGNUP ---------- */
   const [signupName, setSignupName] = useState('')
   const [signupEmail, setSignupEmail] = useState('')
   const [signupPhone, setSignupPhone] = useState('')
   const [signupPassword, setSignupPassword] = useState('')
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('')
 
-  // OTP state
-  const [otpStep, setOtpStep] = useState(false)
-  const [otpCode, setOtpCode] = useState('')
-  const [requestId, setRequestId] = useState<string | null>(null)
+  /* ---------- EMAIL OTP ---------- */
+  const [emailOtpSent, setEmailOtpSent] = useState(false)
+  const [emailOtp, setEmailOtp] = useState('')
+  const [emailVerified, setEmailVerified] = useState(false)
 
-  // Errors
-  const [error, setError] = useState('')
+  /* ---------- PHONE OTP ---------- */
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false)
+  const [phoneOtp, setPhoneOtp] = useState('')
+  const [phoneVerified, setPhoneVerified] = useState(false)
 
-  const isPasswordValid = (password: string) => {
-    if (!password) return false
-    const re =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
-    return re.test(password)
-  }
-
-
+  /* ---------- LOGIN ---------- */
   const handleLogin = async () => {
-  setError('')
-
-  if (!loginIdentifier || !loginPassword) {
-    setError('Please fill all fields')
-    return
-  }
-
-  // Detect email or phone automatically
-  const isEmail = isEmailValid(loginIdentifier)
-  const isPhone = isIndianPhoneNumberValid(loginIdentifier)
-
-  if (!isEmail && !isPhone) {
-    setError('Please enter a valid email or Indian mobile number')
-    return
-  }
-
-  setIsLoading(true)
-  try {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({
-        identifier: loginIdentifier.trim(),
-        password: loginPassword,
-      }),
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      setError(data.error || 'Login failed')
-    } else {
-      // Optional: You can differentiate for analytics or UX here
-      // console.log(isPhone ? 'Logged in via mobile' : 'Logged in via email')
-      window.location.assign('/')
-    }
-  } catch (err) {
-    console.error('LOGIN ERROR:', err)
-    setError('Internal server error')
-  } finally {
-    setIsLoading(false)
-  }
-}
-
-
-
-  const handleSignup = async () => {
     setError('')
-
-    if (!signupName || !signupEmail || !signupPassword) {
-      setError('Please fill all required fields')
+    if (!loginIdentifier || !loginPassword) {
+      setError('Please fill all fields')
       return
     }
 
-    if (signupPassword !== signupConfirmPassword) {
-      setError('Passwords do not match')
+    if (
+      !isEmailValid(loginIdentifier) &&
+      !isIndianPhoneNumberValid(loginIdentifier)
+    ) {
+      setError('Invalid email or phone')
       return
     }
 
-    if (!isPasswordValid(signupPassword)) {
-      setError(
-        'Password must be 8+ chars, include uppercase, lowercase, number, special char'
-      )
-      return
-    }
+    setIsLoading(true)
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          identifier: loginIdentifier,
+          password: loginPassword,
+        }),
+      })
 
-    if (signupEmail && !isEmailValid(signupEmail)) {
+      const data = await res.json()
+      if (!res.ok) setError(data.error || 'Login failed')
+      else window.location.assign('/')
+    } catch {
+      setError('Internal server error')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  /* ---------- SEND OTP ---------- */
+  const sendEmailOtp = async () => {
+    setError('')
+    if (!isEmailValid(signupEmail)) {
       setError('Invalid email')
       return
     }
 
-    setIsLoading(true)
-    try {
-      // Trigger OTP send
-      const response = await fetch('/api/auth/otp/email/try', {
-        method: 'POST',
-        body: JSON.stringify({ email: signupEmail }),
-      })
-      const data = await response.json()
-      if (!response.ok) {
-        setError(data.error || 'OTP send failed')
-      } else {
-        setRequestId(data.requestId)
-        setOtpStep(true)
-      }
-    } catch (err) {
-      console.error(err)
-      setError('Internal server error')
-    } finally {
-      setIsLoading(false)
-    }
-  }
+    const res = await fetch('/api/auth/otp/email/try', {
+      method: 'POST',
+      body: JSON.stringify({ email: signupEmail, phone: signupPhone }),
+    })
 
-  const handleVerifyOtp = async () => {
-    setError('')
-    if (!otpCode || !signupEmail ) {
-      setError('OTP and email required')
+    if (!res.ok) {
+      const data = await res.json()
+      setError(data.error || 'Failed to send email OTP')
       return
     }
 
-    setIsLoading(true)
-    try {
-      const response = await fetch('/api/auth/otp/email/verify', {
-        method: 'POST',
-        body: JSON.stringify({
-          otp: otpCode,
-          email: signupEmail,
-          name: signupName,
-          phone: signupPhone,
-          password: signupPassword,
-        }),
-      })
-      const data = await response.json()
-      if (!response.ok) {
-        setError(data.error || 'OTP verification failed')
-      } else {
-        window.location.assign('/')
-      }
-    } catch (err) {
-      console.error(err)
-      setError('Internal server error')
-    } finally {
-      setIsLoading(false)
-    }
+    setEmailOtpSent(true)
   }
 
+  const sendPhoneOtp = async () => {
+    setError('')
+    if (!isIndianPhoneNumberValid(signupPhone)) {
+      setError('Invalid phone number')
+      return
+    }
+
+    const res = await fetch('/api/auth/otp/phone/try', {
+      method: 'POST',
+      body: JSON.stringify({ phone: signupPhone, email: signupEmail }),
+    })
+
+    if (!res.ok) {
+      const data = await res.json()
+      setError(data.error || 'Failed to send phone OTP')
+      return
+    }
+
+    setPhoneOtpSent(true)
+  }
+
+  /* ---------- VERIFY OTP ---------- */
+  const verifyEmailOtp = async () => {
+    setError('')
+    const res = await fetch('/api/auth/otp/email/verify', {
+      method: 'POST',
+      body: JSON.stringify({
+        otp: emailOtp,
+        email: signupEmail,
+      }),
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      setError(data.error || 'Email OTP verification failed')
+      return
+    }
+
+    console.log("EMAIL TEMP TOKEN:", data.tempToken) //temporary console login
+    setEmailTempToken(data.tempToken)   // 🔥 store token
+    setEmailVerified(true)
+  }
+
+  const verifyPhoneOtp = async () => {
+    setError('')
+    const res = await fetch('/api/auth/otp/phone/verify', {
+      method: 'POST',
+      body: JSON.stringify({
+        otp: phoneOtp,
+        phone: signupPhone,
+      }),
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      setError(data.error || 'Phone OTP verification failed')
+      return
+    }
+
+    setPhoneTempToken(data.tempToken)   // 🔥 store token
+    setPhoneVerified(true)
+  }
+
+const handleSignup = async () => {
+  setError('')
+
+  if (!signupPassword || signupPassword !== signupConfirmPassword) {
+    setError('Passwords do not match')
+    return
+  }
+
+  console.log("EMAIL VERIFIED:", emailVerified) //temporary
+console.log("EMAIL TEMP TOKEN:", emailTempToken)  //temporary
+  
+const res = await fetch('/api/auth/signup', {
+    method: 'POST',
+    body: JSON.stringify({
+      name: signupName,
+      email: emailVerified ? signupEmail : undefined,
+      phone: phoneVerified ? signupPhone : undefined,
+      emailTempToken,
+      phoneTempToken,
+      password: signupPassword,
+    }),
+  })
+
+  const data = await res.json()
+
+  if (!res.ok) {
+    setError(data.error || 'Signup failed')
+    return
+  }
+
+  window.location.assign('/')
+}
+  
+
+/* ---------- UI ---------- */
   return (
     <div className="grid gap-6">
-      {/* Tabs */}
-      {!otpStep && (
-        <div className="flex justify-center space-x-4">
-          <button
-            className={`px-4 py-2 font-medium border-b-2 ${
-              activeTab === 'login'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground'
-            }`}
-            onClick={() => setActiveTab('login')}
-          >
-            Login
-          </button>
-          <button
-            className={`px-4 py-2 font-medium border-b-2 ${
-              activeTab === 'signup'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground'
-            }`}
-            onClick={() => setActiveTab('signup')}
-          >
-            Sign Up
-          </button>
-        </div>
-      )}
+      <div className="flex justify-center gap-4">
+        <button onClick={() => setActiveTab('login')}>Login</button>
+        <button onClick={() => setActiveTab('signup')}>Sign Up</button>
+      </div>
 
-      {/* Error Message */}
-      {error && <p className="text-red-700 text-sm">{error}</p>}
+      {error && <p className="text-sm text-red-600">{error}</p>}
 
-      {/* Login Form */}
-      {!otpStep && activeTab === 'login' && (
-        <div className="grid gap-4">
-          <div className="grid gap-1">
-            <Label>Email or Phone</Label>
-            <Input
-              type="text"
-              placeholder="Email or Phone"
-              value={loginIdentifier}
-              onChange={(e) => setLoginIdentifier(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
-
-          <div className="grid gap-1">
-            <Label>Password</Label>
-            <Input
-              type="password"
-              placeholder="Password"
-              value={loginPassword}
-              onChange={(e) => setLoginPassword(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
-
-          <div className="flex justify-end text-sm mt-1">
-            <Link
-              href="/login/forgot-password"
-              className="text-primary underline hover:text-primary/80"
-            >
-              Forgot password?
-            </Link>
-          </div>
-
-          <Button
-            onClick={handleLogin}
-            disabled={isLoading}
-            className="w-full mt-2"
-          >
+      {activeTab === 'login' && (
+        <div className="grid gap-3">
+          <Input
+            placeholder="Email or Phone"
+            value={loginIdentifier}
+            onChange={(e) => setLoginIdentifier(e.target.value)}
+          />
+          <Input
+            type="password"
+            placeholder="Password"
+            value={loginPassword}
+            onChange={(e) => setLoginPassword(e.target.value)}
+          />
+          <Link href="/login/forgot-password" className="text-sm underline">
+            Forgot password?
+          </Link>
+          <Button onClick={handleLogin} disabled={isLoading}>
             {isLoading && <Loader className="mr-2 h-4 animate-spin" />}
             Login
           </Button>
         </div>
       )}
 
-      {/* Signup Form */}
-      {!otpStep && activeTab === 'signup' && (
+      {activeTab === 'signup' && (
         <div className="grid gap-4">
-          <div className="grid gap-1">
-            <Label>Name</Label>
-            <Input
-              type="text"
-              placeholder="Your name"
-              value={signupName}
-              onChange={(e) => setSignupName(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
+          <Input placeholder="Name" onChange={(e) => setSignupName(e.target.value)} />
 
+          {/* EMAIL */}
           <div className="grid gap-1">
             <Label>Email</Label>
-            <Input
-              type="email"
-              placeholder="Email"
-              value={signupEmail}
-              onChange={(e) => setSignupEmail(e.target.value)}
-              disabled={isLoading}
-            />
+            <div className="flex gap-2">
+              <Input
+                value={signupEmail}
+                onChange={(e) => setSignupEmail(e.target.value)}
+                disabled={emailVerified}
+              />
+              {!emailOtpSent && !emailVerified && (
+                <Button variant="outline" onClick={sendEmailOtp}>
+                  Send OTP
+                </Button>
+              )}
+            </div>
+
+            {emailOtpSent && !emailVerified && (
+              <div className="flex gap-2 mt-2">
+                <Input
+                  placeholder="Enter OTP"
+                  value={emailOtp}
+                  onChange={(e) => setEmailOtp(e.target.value)}
+                />
+                <Button onClick={verifyEmailOtp}>Verify OTP</Button>
+              </div>
+            )}
           </div>
 
+          {/* PHONE */}
           <div className="grid gap-1">
             <Label>Phone</Label>
-            <Input
-              type="tel"
-              placeholder="Phone"
-              value={signupPhone}
-              onChange={(e) => setSignupPhone(e.target.value)}
-              disabled={isLoading}
-            />
+            <div className="flex gap-2">
+              <Input
+                value={signupPhone}
+                onChange={(e) => setSignupPhone(e.target.value)}
+                disabled={phoneVerified}
+              />
+              {!phoneOtpSent && !phoneVerified && (
+                <Button variant="outline" onClick={sendPhoneOtp}>
+                  Send OTP
+                </Button>
+              )}
+            </div>
+
+            {phoneOtpSent && !phoneVerified && (
+              <div className="flex gap-2 mt-2">
+                <Input
+                  placeholder="Enter OTP"
+                  value={phoneOtp}
+                  onChange={(e) => setPhoneOtp(e.target.value)}
+                />
+                <Button onClick={verifyPhoneOtp}>Verify OTP</Button>
+              </div>
+            )}
           </div>
 
-          <div className="grid gap-1">
-            <Label>Password</Label>
-            <Input
-              type="password"
-              placeholder="Password"
-              value={signupPassword}
-              onChange={(e) => setSignupPassword(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
+          <Input
+            type="password"
+            placeholder="Password"
+            value={signupPassword}
+            onChange={(e) => setSignupPassword(e.target.value)}
+          />
+          <Input
+            type="password"
+            placeholder="Confirm Password"
+            value={signupConfirmPassword}
+            onChange={(e) => setSignupConfirmPassword(e.target.value)}
+          />
 
-          <div className="grid gap-1">
-            <Label>Confirm Password</Label>
-            <Input
-              type="password"
-              placeholder="Confirm Password"
-              value={signupConfirmPassword}
-              onChange={(e) => setSignupConfirmPassword(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
+          {(emailVerified || phoneVerified) && (
+            <Button className="mt-2"  onClick={handleSignup}>
+              Complete Signup
+            </Button>
+          )}
 
-          <Button
-            onClick={handleSignup}
-            disabled={isLoading}
-            className="w-full mt-2"
-          >
-            {isLoading && <Loader className="mr-2 h-4 animate-spin" />}
-            Sign Up
-          </Button>
-        </div>
-      )}
-
-      {/* OTP Step */}
-      {otpStep && (
-        <div className="grid gap-4">
-          <div className="grid gap-1">
-            <Label>Email</Label>
-            <Input type="email" value={signupEmail} disabled />
-          </div>
-
-          <div className="grid gap-1">
-            <Label>OTP Code</Label>
-            <Input
-              type="text"
-              placeholder="Enter OTP"
-              value={otpCode}
-              onChange={(e) => setOtpCode(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
-
-          <Button
-            onClick={handleVerifyOtp}
-            disabled={isLoading}
-            className="w-full mt-2"
-          >
-            {isLoading && <Loader className="mr-2 h-4 animate-spin" />}
-            Verify OTP
-          </Button>
         </div>
       )}
     </div>
