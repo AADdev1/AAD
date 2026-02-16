@@ -2,8 +2,8 @@
 
 import Image from 'next/image'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
+import { OrderTimeline } from './order-timeline'
 
 export function OrderDetails({ order }: { order: any }) {
    const {
@@ -43,6 +43,7 @@ export function OrderDetails({ order }: { order: any }) {
                   {status}
                </Badge>
             </CardHeader>
+
             <CardContent className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                <div>
                   <p className="text-sm text-muted-foreground">Payable</p>
@@ -68,6 +69,13 @@ export function OrderDetails({ order }: { order: any }) {
                   <p className="text-sm text-muted-foreground">Completed</p>
                   <p className="font-medium">{isCompleted ? 'Yes' : 'No'}</p>
                </div>
+            </CardContent>
+         </Card>
+
+         {/* 🔥 Order Timeline */}
+         <Card>
+            <CardContent className="pt-6">
+               <OrderTimeline status={status} />
             </CardContent>
          </Card>
 

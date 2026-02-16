@@ -21,6 +21,29 @@ function buildOtpHtml(otp: string) {
   `
 }
 
+function normalizeIndianPhoneForVendor(phone: string): string {
+  // Remove all non-digits
+  let cleaned = phone.replace(/\D/g, '')
+
+  // Remove leading 0 (011 digits case)
+  if (cleaned.length === 11 && cleaned.startsWith('0')) {
+    cleaned = cleaned.slice(1)
+  }
+
+  // Remove leading 91 if present
+  if (cleaned.length === 12 && cleaned.startsWith('91')) {
+    cleaned = cleaned.slice(2)
+  }
+
+  // Final validation
+  if (cleaned.length !== 10) {
+    throw new Error('Invalid Indian phone number format')
+  }
+
+  return cleaned
+}
+
+
 async function sendSmsOtp(phone: string, otp: string) {
   const apiKey = process.env.TWOFACTOR_API_KEY
 
@@ -71,10 +94,14 @@ export async function requestOtp(target: {
   }
 
   // 🚧 PHONE FLOW (unchanged)
-if (target.phone) {
-  await sendSmsOtp(target.phone, otp)
-  console.log(`📱 OTP sent to phone: ${target.phone}`)
-}
+  if (target.phone) {
+    const normalizedPhone = normalizeIndianPhoneForVendor(target.phone)
+
+    await sendSmsOtp(normalizedPhone, otp)
+
+    console.log(`📱 OTP sent to phone: ${normalizedPhone}`)
+  }
+
 
   return {
     message: "OTP generated",

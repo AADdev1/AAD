@@ -102,24 +102,32 @@ export function Receipt({ cartItems = [], loading = false }: ReceiptProps) {
     }
   }
 
+  const DELIVERY_CHARGE = 100
+
+
   function calculatePayableCost() {
-    let totalAmount = 0,
-      discountAmount = 0
+  let totalAmount = 0
+  let discountAmount = 0
 
-    if (isVariableValid(cartItems)) {
-      for (const item of cartItems) {
-        totalAmount += Number(item?.count || 0) * Number(item?.product?.price || 0)
-        discountAmount += Number(item?.count || 0) * Number(item?.product?.discount || 0)
-      }
-    }
-
-    const payableAmount = totalAmount - discountAmount
-    return {
-      totalAmount: totalAmount.toFixed(2),
-      discountAmount: discountAmount.toFixed(2),
-      payableAmount: payableAmount.toFixed(2),
+  if (isVariableValid(cartItems)) {
+    for (const item of cartItems) {
+      totalAmount += Number(item?.count || 0) * Number(item?.product?.price || 0)
+      discountAmount += Number(item?.count || 0) * Number(item?.product?.discount || 0)
     }
   }
+
+  const subtotal = totalAmount - discountAmount
+  const deliveryCharge = subtotal > 0 ? DELIVERY_CHARGE : 0
+  const payableAmount = subtotal + deliveryCharge
+
+  return {
+    totalAmount: totalAmount.toFixed(2),
+    discountAmount: discountAmount.toFixed(2),
+    deliveryCharge: deliveryCharge.toFixed(2),
+    payableAmount: payableAmount.toFixed(2),
+  }
+}
+
 
   const costs = calculatePayableCost()
 
@@ -351,6 +359,10 @@ export function Receipt({ cartItems = [], loading = false }: ReceiptProps) {
           <div className="flex justify-between">
             <p>Discount</p>
             <h3>₹{costs.discountAmount}</h3>
+          </div>
+          <div className="flex justify-between">
+            <p>Delivery Charges</p>
+            <h3>₹{costs.deliveryCharge}</h3>
           </div>
           <Separator />
           <div className="flex justify-between font-semibold text-lg">

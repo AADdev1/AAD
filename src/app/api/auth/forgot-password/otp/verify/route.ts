@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { isExpired } from '@/lib/temp-token'
 import { signJWT } from '@/lib/jwt'
 
 export async function POST(req: NextRequest) {
@@ -9,57 +10,58 @@ export async function POST(req: NextRequest) {
 
     if (!identifier || !otp || !newPassword) {
       return NextResponse.json(
-        { error: 'Identifier, OTP, and newPassword are required' },
+        { error: 'Identifier, OTP and newPassword are required' },
         { status: 400 }
       )
     }
 
     const isPhone = /^\d{10}$/.test(identifier)
+    const identifierType = isPhone ? 'phone' : 'email'
 
-    // 🔍 1️⃣ Find OTP in temp_verification table
-    const verification = await prisma.tempVerification.findFirst({
+    // 🔍 Find tempVerification using composite key
+    const record = await prisma.tempVerification.findUnique({
       where: {
-        identifier,
-        otp,
+        identifier_identifier_type: {
+          identifier,
+          identifier_type: identifierType,
+        },
       },
     })
 
-    if (!verification) {
+    if (!record) {
       return NextResponse.json(
         { error: 'Invalid OTP' },
         { status: 400 }
       )
     }
 
-    // ⏳ 2️⃣ Check expiry
-    const OTP_EXPIRY_MINUTES = 5
+    if (record.otp !== otp) {
+      return NextResponse.json(
+        { error: 'Invalid OTP' },
+        { status: 400 }
+      )
+    }
 
-    const expiryTime = new Date(
-      verification.otp_created_on.getTime() +
-      OTP_EXPIRY_MINUTES * 60 * 1000
-    )
-
-    if (expiryTime < new Date()) {
+    if (isExpired(record.otp_created_on, 5)) {
       return NextResponse.json(
         { error: 'OTP expired' },
         { status: 400 }
       )
     }
 
-
-    // 🔎 3️⃣ Find existing user
+    // 🔎 Find user
     const user = isPhone
       ? await prisma.user.findUnique({ where: { phone: identifier } })
       : await prisma.user.findUnique({ where: { email: identifier } })
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Account not found for this identifier' },
+        { error: 'Account not found' },
         { status: 404 }
       )
     }
 
-    // 🔒 4️⃣ Hash new password
+    // 🔒 Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 12)
 
     const updatedUser = await prisma.user.update({
@@ -67,17 +69,16 @@ export async function POST(req: NextRequest) {
       data: { passwordHash: hashedPassword },
     })
 
-    // 🧹 5️⃣ Delete OTP after successful use
+    // 🧹 Delete tempVerification after success
     await prisma.tempVerification.delete({
-      where: { id: verification.id },
+      where: { id: record.id },
     })
 
-    // 🔑 6️⃣ Issue JWT
+    // 🔑 Issue JWT
     const token = await signJWT({ sub: updatedUser.id })
 
     const res = NextResponse.json({
       message: 'Password updated successfully',
-      user: updatedUser,
     })
 
     res.cookies.set('token', token, { httpOnly: true, path: '/' })
@@ -85,9 +86,9 @@ export async function POST(req: NextRequest) {
 
     return res
   } catch (error: any) {
-    console.error('VERIFY OTP & UPDATE PASSWORD ERROR:', error)
+    console.error('FORGOT PASSWORD VERIFY ERROR:', error)
     return NextResponse.json(
-      { error: error.message },
+      { error: 'OTP verification failed' },
       { status: 500 }
     )
   }

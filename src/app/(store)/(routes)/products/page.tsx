@@ -1,8 +1,9 @@
 import { ProductGrid, ProductSkeletonGrid } from '@/components/native/Product'
 import { Heading } from '@/components/native/heading'
 import { Separator } from '@/components/native/separator'
-import prisma from '@/lib/prisma'
 import { isVariableValid } from '@/lib/utils'
+import { Prisma } from '@prisma/client'
+
 
 import {
    AvailableToggle,
@@ -13,32 +14,45 @@ import {
 } from './components/options'
 
 export default async function Products({ searchParams }) {
-   const { sort, isAvailable, brand, category, page = 1 } = searchParams ?? null
+   const {
+      sort,
+      isAvailable,
+      brand,
+      category,
+      page = 1,
+   } = searchParams || {}
 
    const orderBy = getOrderBy(sort)
 
    const brands = await prisma.brand.findMany()
    const categories = await prisma.category.findMany()
+
    const products = await prisma.product.findMany({
       where: {
-         isAvailable: isAvailable == 'true' || sort ? true : undefined,
-         brand: {
-            title: {
-               contains: brand,
-               mode: 'insensitive',
-            },
-         },
-         categories: {
-            some: {
+         ...(isAvailable === 'true' && { isAvailable: true }),
+
+         ...(brand && {
+            brand: {
                title: {
-                  contains: category,
+                  contains: brand,
                   mode: 'insensitive',
                },
             },
-         },
+         }),
+
+         ...(category && {
+            categories: {
+               some: {
+                  title: {
+                     contains: category,
+                     mode: 'insensitive',
+                  },
+               },
+            },
+         }),
       },
       orderBy,
-      skip: (page - 1) * 12,
+      skip: (Number(page) - 1) * 12,
       take: 12,
       include: {
          brand: true,
@@ -48,10 +62,8 @@ export default async function Products({ searchParams }) {
 
    return (
       <>
-         <Heading
-            title="Products"
-            description=""
-         />
+         <Heading title="Products" description="" />
+
          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 mb-4">
             <SortBy initialData={sort} />
             <CategoriesCombobox
@@ -60,10 +72,12 @@ export default async function Products({ searchParams }) {
             />
             <BrandCombobox initialBrand={brand} brands={brands} />
             <AvailableToggle initialData={isAvailable} />
-            <ClearFilterButton/>
+            <ClearFilterButton />
          </div>
+
          <Separator />
-         {isVariableValid(products) ? (
+
+         {products.length > 0 ? (
             <ProductGrid products={products} />
          ) : (
             <ProductSkeletonGrid />
@@ -72,36 +86,27 @@ export default async function Products({ searchParams }) {
    )
 }
 
-function getOrderBy(sort) {
-   let orderBy
 
+function getOrderBy(sort?: string): Prisma.ProductOrderByWithRelationInput {
    switch (sort) {
       case 'featured':
-         orderBy = {
+         return {
             orderItems: {
                _count: 'desc',
             },
          }
-         break
+
       case 'most_expensive':
-         orderBy = {
-            price: 'desc',
-         }
-         break
+         return { price: 'desc' }
+
       case 'least_expensive':
-         orderBy = {
-            price: 'asc',
-         }
-         break
+         return { price: 'asc' }
 
       default:
-         orderBy = {
+         return {
             orderItems: {
                _count: 'desc',
             },
          }
-         break
    }
-
-   return orderBy
 }

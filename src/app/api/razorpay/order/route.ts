@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     // --- 3️⃣ Calculate totals ---
     let total = 0
     let discount = 0
-    const shipping = 0
+    const shipping = 100
     const tax = 0
 
     for (const item of products) {

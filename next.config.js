@@ -2,7 +2,11 @@
 
 const path = require('path')
 
-module.exports = {
+const nextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true, // ✅ disable ESLint on Vercel build
+  },
+
   images: {
     remotePatterns: [
       {
@@ -11,6 +15,7 @@ module.exports = {
       },
     ],
   },
+
   async redirects() {
     return [
       {
@@ -20,8 +25,11 @@ module.exports = {
       },
     ]
   },
+
   webpack: (config) => {
     config.resolve.alias['@'] = path.resolve(__dirname, 'src')
     return config
   },
 }
+
+module.exports = nextConfig

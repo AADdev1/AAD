@@ -130,6 +130,7 @@ model Product {
   description    String?
   images         String[]
   keywords       String[]
+  slug           String          @unique
   metadata       Json?
   price          Float           @default(100)
   discount       Float           @default(0)

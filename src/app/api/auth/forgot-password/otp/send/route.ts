@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { requestOtp } from '@/lib/otp-api'
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,8 +14,9 @@ export async function POST(req: NextRequest) {
     }
 
     const isPhone = /^\d{10}$/.test(identifier)
+    const identifierType = isPhone ? 'phone' : 'email'
 
-    // 🔍 Find user by identifier
+    // 🔍 Check user exists
     const user = isPhone
       ? await prisma.user.findUnique({ where: { phone: identifier } })
       : await prisma.user.findUnique({ where: { email: identifier } })
@@ -26,30 +28,42 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 🔐 Check verification status
-    if (isPhone && !user.isPhoneVerified) {
-      return NextResponse.json(
-        { error: 'Phone number is not verified for password recovery' },
-        { status: 403 }
-      )
-    }
+    // 🔐 Generate OTP
+    const otpResponse = await requestOtp(
+      isPhone ? { phone: identifier } : { email: identifier }
+    )
 
-    if (!isPhone && !user.isEmailVerified) {
-      return NextResponse.json(
-        { error: 'Email is not verified for password recovery' },
-        { status: 403 }
-      )
-    }
+    const otp = otpResponse.otp
 
-    // ✅ Phase-1 success: OTP CAN be sent (but not yet)
+    // 🔁 UPSERT tempVerification
+    await prisma.tempVerification.upsert({
+      where: {
+        identifier_identifier_type: {
+          identifier,
+          identifier_type: identifierType,
+        },
+      },
+      create: {
+        identifier,
+        identifier_type: identifierType,
+        otp,
+        otp_created_on: new Date(),
+      },
+      update: {
+        otp,
+        otp_created_on: new Date(),
+        temp_token: null,
+        temp_token_created_on: null,
+      },
+    })
+
     return NextResponse.json({
-      message: 'Identifier verified. OTP can be sent.',
-      nextStep: 'SEND_OTP',
+      message: 'OTP sent successfully',
     })
   } catch (error: any) {
-    console.error('FORGOT PASSWORD PRECHECK ERROR:', error)
+    console.error('FORGOT PASSWORD SEND OTP ERROR:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to send OTP' },
       { status: 500 }
     )
   }
