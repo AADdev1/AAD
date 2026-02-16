@@ -1,9 +1,8 @@
 import { ProductGrid, ProductSkeletonGrid } from '@/components/native/Product'
 import { Heading } from '@/components/native/heading'
 import { Separator } from '@/components/native/separator'
-import { isVariableValid } from '@/lib/utils'
-import  Prisma  from '@prisma/client'
-
+import prisma from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 
 import {
    AvailableToggle,
@@ -13,7 +12,7 @@ import {
    SortBy,
 } from './components/options'
 
-export default async function Products({ searchParams }) {
+export default async function Products({ searchParams }: any) {
    const {
       sort,
       isAvailable,
@@ -22,43 +21,43 @@ export default async function Products({ searchParams }) {
       page = 1,
    } = searchParams || {}
 
-   const orderBy = getOrderBy(sort)
-
    const brands = await prisma.brand.findMany()
    const categories = await prisma.category.findMany()
 
-   const products = await prisma.product.findMany({
-      where: {
-         ...(isAvailable === 'true' && { isAvailable: true }),
+   const products = await prisma.product.findMany(
+      Prisma.validator<Prisma.ProductFindManyArgs>()({
+         where: {
+            ...(isAvailable === 'true' && { isAvailable: true }),
 
-         ...(brand && {
-            brand: {
-               title: {
-                  contains: brand,
-                  mode: 'insensitive',
-               },
-            },
-         }),
-
-         ...(category && {
-            categories: {
-               some: {
+            ...(brand && {
+               brand: {
                   title: {
-                     contains: category,
+                     contains: brand,
                      mode: 'insensitive',
                   },
                },
-            },
-         }),
-      },
-      orderBy,
-      skip: (Number(page) - 1) * 12,
-      take: 12,
-      include: {
-         brand: true,
-         categories: true,
-      },
-   })
+            }),
+
+            ...(category && {
+               categories: {
+                  some: {
+                     title: {
+                        contains: category,
+                        mode: 'insensitive',
+                     },
+                  },
+               },
+            }),
+         },
+         orderBy: getOrderBy(sort),
+         skip: (Number(page) - 1) * 12,
+         take: 12,
+         include: {
+            brand: true,
+            categories: true,
+         },
+      })
+   )
 
    return (
       <>
@@ -86,27 +85,16 @@ export default async function Products({ searchParams }) {
    )
 }
 
-
-function getOrderBy(sort?: string) {
-   switch (sort) {
-      case 'featured':
-         return {
-            orderItems: {
-               _count: 'desc',
-            },
-         }
-
-      case 'most_expensive':
-         return { price: 'desc' }
-
-      case 'least_expensive':
-         return { price: 'asc' }
-
-      default:
-         return {
-            orderItems: {
-               _count: 'desc',
-            },
-         }
+function getOrderBy(
+   sort?: string
+): Prisma.ProductOrderByWithRelationInput {
+   if (sort === 'most_expensive') {
+      return { price: 'desc' }
    }
+
+   if (sort === 'least_expensive') {
+      return { price: 'asc' }
+   }
+
+   return { createdAt: 'desc' }
 }
