@@ -2,7 +2,7 @@ import { ProductGrid, ProductSkeletonGrid } from '@/components/native/Product'
 import { Heading } from '@/components/native/heading'
 import { Separator } from '@/components/native/separator'
 import { isVariableValid } from '@/lib/utils'
-import { Prisma } from '@prisma/client'
+import  Prisma  from '@prisma/client'
 
 
 import {
