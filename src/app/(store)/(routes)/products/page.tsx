@@ -87,7 +87,7 @@ export default async function Products({ searchParams }) {
 }
 
 
-function getOrderBy(sort?: string): Prisma.ProductOrderByWithRelationInput {
+function getOrderBy(sort?: string) {
    switch (sort) {
       case 'featured':
          return {
