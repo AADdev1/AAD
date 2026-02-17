@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic"
 import { ProductGrid, ProductSkeletonGrid } from '@/components/native/Product'
 import { Heading } from '@/components/native/heading'
 import { Separator } from '@/components/native/separator'
