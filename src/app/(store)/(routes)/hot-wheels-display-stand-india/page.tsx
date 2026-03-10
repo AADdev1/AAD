@@ -34,7 +34,7 @@ export default function Page() {
 
         <div className="relative w-full h-[500px] rounded-lg overflow-hidden">
           <Image
-            src="/PRD5(1).jpg"
+            src="/pegmount-display-stand-2.jpg"
             alt="Hot wheels diecast display setup"
             fill
             className="object-cover"
@@ -81,7 +81,7 @@ export default function Page() {
 
                 <div className="relative h-[260px]">
                   <Image
-                    src="/PRD4(1).jpg"
+                    src="/minicard-display-stand-1.jpg"
                     alt="Hot wheels blister card display stand"
                     fill
                     className="object-cover rounded-lg"
@@ -107,7 +107,7 @@ export default function Page() {
 
                 <div className="relative h-[260px]">
                   <Image
-                    src="/PRD5(3).jpg"
+                    src="/rallystage-display-base-1.jpg"
                     alt="Hot wheels rally display stand"
                     fill
                     className="object-cover rounded-lg"
@@ -133,7 +133,7 @@ export default function Page() {
 
                 <div className="relative h-[260px]">
                   <Image
-                    src="/PRD5(1).jpg"
+                    src="/pegmount-display-stand-1.jpg"
                     alt="Hot wheels pegboard display stand"
                     fill
                     className="object-cover rounded-lg"
