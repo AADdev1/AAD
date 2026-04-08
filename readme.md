@@ -1,5 +1,4 @@
-
-# AllAboutDiecast 🚗
+# AllAboutDiecast (AADDev) 🚗
 
 AllAboutDiecast is a community-driven platform for diecast collectors.
 
