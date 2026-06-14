@@ -83,7 +83,8 @@ export async function requestOtp(target: {
   const otp = generateOtp()
 
   // ✅ EMAIL FLOW
-  if (target.email) {
+if (target.email) {
+  try {
     await sendHtmlEmail(
       target.email,
       "Your OTP Verification Code",
@@ -91,7 +92,12 @@ export async function requestOtp(target: {
     )
 
     console.log(`📧 OTP sent to email: ${target.email}`)
-  }
+  } 
+  catch (err: any) {
+  console.error("❌ FULL EMAIL ERROR:", err?.response?.data || err)
+  throw new Error(err?.message || "Failed to send OTP email")
+}
+}
 
   // 🚧 PHONE FLOW (unchanged)
   if (target.phone) {

@@ -7,6 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model search {
   id    Int    @id @default(autoincrement())
   name  String @db.VarChar(255)
@@ -56,9 +57,10 @@ model TempVerification {
   is_signed_up          Boolean   @default(false)
   created_at            DateTime  @default(now()) @db.Timestamptz(6)
   updated_at            DateTime  @default(now()) @db.Timestamptz(6)
-  resend_count       Int       @default(0)
-  last_otp_sent_at   DateTime? @db.Timestamptz(6)
-  cooldown_until     DateTime? @db.Timestamptz(6)
+  resend_count          Int?      @default(0)
+  last_otp_sent_at      DateTime? @db.Timestamptz(6)
+  cooldown_until        DateTime? @db.Timestamptz(6)
+
   @@unique([identifier, identifier_type])
   @@index([otp_created_on, temp_token_created_on], map: "idx_temp_verification_expiry")
   @@map("temp_verification")
@@ -130,7 +132,6 @@ model Product {
   description    String?
   images         String[]
   keywords       String[]
-  slug           String          @unique
   metadata       Json?
   price          Float           @default(100)
   discount       Float           @default(0)
@@ -141,6 +142,7 @@ model Product {
   brandId        String
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  slug           String?         @unique(map: "product_slug_unique") @db.VarChar(255)
   cartItems      CartItem[]
   orderItems     OrderItem[]     @relation("ProductToOrderItem")
   brand          Brand           @relation(fields: [brandId], references: [id])

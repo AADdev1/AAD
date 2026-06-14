@@ -30,6 +30,14 @@ export async function sendHtmlEmail(
   subject: string,
   htmlBody: string
 ) {
+  // ✅ FIX: ensure fresh access token
+  const accessToken = await oAuth2Client.getAccessToken()
+
+  oAuth2Client.setCredentials({
+    refresh_token: GOOGLE_REFRESH_TOKEN,
+    access_token: accessToken.token!,
+  })
+
   const message = [
     `From: ${GMAIL_SENDER}`,
     `To: ${to}`,
